@@ -68,7 +68,7 @@ const agregarPeriodo = async (idPeriodo) => {
 
       try{
         PantallaCarga.mostrar();
-        const resp = await PeriodosService.agregarPeriodo(idPeriodo, state.nombre, UtilsDate.toYearMonthDay(state.fechaInicio), UtilsDate.toYearMonthDay(state.fechaFinal), state.activo);
+        const resp = await PeriodosService.modificarPeriodo(idPeriodo, state.nombre, UtilsDate.toYearMonthDay(state.fechaInicio), UtilsDate.toYearMonthDay(state.fechaFinal), state.activo);
 
         if(resp) {
           await NotificacionesModal.PantallaExito('Evento Editado con Éxito');
@@ -188,7 +188,7 @@ const humanfriendlyConfig = {
 
 const mostrarModal = async (idPeriodo, index) => {
   let inputInicio = document.querySelector('#inputfechaInicio');
-  let inputFin    = document.querySelector('#inputfechaFin')
+  let inputFin    = document.querySelector('#inputfechaFin');
   await limpiarModal()
 
   if(!idPeriodo) {
@@ -390,7 +390,7 @@ onMounted(() => {
           </label>
 
           <input type="text" class="form-control" v-model.trim="v$.nombre.$model"
-                 @input="this.v$.nombre.$touch()"
+                 
                  :class="{'is-invalid': v$.nombre.$error,}" id="nombreSistema"
                  placeholder="Ingresa un nombre para el período">
           
@@ -462,9 +462,11 @@ onMounted(() => {
       <template #footer>
         <div class="d-flex align-items-center col-12">
           <div class="col-6 px-2">
-            <a class="btn btn-seafi-aqua w-100" ref="enviando"
+            <button class="btn btn-seafi-aqua w-100" ref="enviando"
+               type="button"
+               :disabled="v$.$invalid"
                @click="agregarPeriodo(state.idPeriodo)">Aceptar
-            </a>
+            </button>
 
           </div>
 
