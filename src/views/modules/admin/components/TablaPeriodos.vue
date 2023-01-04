@@ -58,79 +58,38 @@ watch(paginaActual, (newPage) => {
 })
 
 const agregarPeriodo = async (idPeriodo) => {
+
   await modalPeriodo.value.hide();
 
-  if (idPeriodo !== ''){
-
-    const resp = await NotificacionesRecepcion.ConfirmacionEditar(state.fechaInicio, 'Modificar');
-
-    if(resp.isConfirmed){
-
-      try{
-        PantallaCarga.mostrar();
-        const resp = await PeriodosService.modificarPeriodo(idPeriodo, state.nombre, UtilsDate.toYearMonthDay(state.fechaInicio), UtilsDate.toYearMonthDay(state.fechaFinal), state.activo);
-
-        if(resp) {
-          await NotificacionesModal.PantallaExito('Evento Editado con Éxito');
-        }
-        await limpiarModal();
-
-      }catch (error){
-
-        await NotificacionError.Agendar(error);
-
-      }finally {
-        PantallaCarga.ocultar();
-        await cargarDias();
-      }
+  if(idPeriodo !== '') { //Editar
+    try{
+      PantallaCarga.mostrar();
+      const resp = await PeriodosService.modificarPeriodo(idPeriodo, state.nombre, UtilsDate.toYearMonthDay(state.fechaInicio), UtilsDate.toYearMonthDay(state.fechaFinal), state.activo);
+      
+      if(resp){ await NotificacionesModal.PantallaExito('Periodo Editado con Éxito')}
+      await limpiarModal();
+    } catch(e){
+      await NotificacionError.Agendar(e);
+    }finally{
+      PantallaCarga.ocultar();
+      await cargarPeriodos();
     }
-  } else{ // Evento nuevo
+
+  }else{ //Periodo Nuevo
 
     try{
-      const date = await NotificacionesRecepcion.ValidarDiaInhabil(state.fechaInicio, 'Agregar');
+      PantallaCarga.mostrar();
+      const resp = await PeriodosService.agregarPeriodo('', state.nombre, UtilsDate.toYearMonthDay(state.fechaInicio), UtilsDate.toYearMonthDay(state.fechaFinal), state.activo);
 
-      if (date.isConfirmed) {
-        try {
-          PantallaCarga.mostrar();
-          const resp = await PeriodosService.agregarPeriodo(idPeriodo, state.nombre, UtilsDate.toYearMonthDay(state.fechaInicio), UtilsDate.toYearMonthDay(state.fechaFinal), state.activo);
-          await modalPeriodo.value.hide();
+      await modalPeriodo.value.hide();
+      if(resp){await NotificacionesModal.PantallaExito('Periodo Agregado con Éxito');}
 
-          if(resp){
-            await NotificacionesModal.PantallaExito('Evento Agregado con Éxito');
-          }
-
-          await limpiarModal();
-
-        }catch(error) {
-          await NotificacionError.Agendar(error);
-        }finally {
-          PantallaCarga.ocultar();
-          await cargarDias();
-        }
-      }
-    }catch (e){
-
-      const resp = await NotificacionesCitas.Continuar(e);
-
-      if(resp.isConfirmed){
-        try{
-          PantallaCarga.mostrar();
-          const resp = await PeriodosService.agregarPeriodo(idPeriodo, state.nombre, UtilsDate.toYearMonthDay(state.fechaInicio), UtilsDate.toYearMonthDay(state.fechaFinal), state.activo );
-          await modalPeriodo.value.hide();
-
-          if (resp) {
-            await NotificacionesModal.PantallaExito('Evento Agregado con Éxito');
-
-          }
-          await limpiarModal();
-
-        }catch (error){
-          await NotificacionError.Agendar(error);
-        }finally {
-          PantallaCarga.ocultar();
-          await cargarDias();
-        }
-      }
+      await limpiarModal()
+    }catch(e){
+      await NotificacionError.Agendar(e);
+    }finally {
+      PantallaCarga.ocultar();
+      await cargarPeriodos();
     }
   }
 }
@@ -182,14 +141,14 @@ const v$ = useVuelidate(rules, state);
 const humanfriendlyConfig = {
   defaultDate: 'today',
   dateFormat: 'd/m/Y',
-  // minDate: new Date(new Date().getFullYear() - 1, 12, 1),
-  // maxDate: new Date(new Date().getFullYear() + 1, 12, 1)
+  minDate: new Date(new Date().getFullYear() - 1, 12, 1),
+   maxDate: new Date(new Date().getFullYear() + 1, 12, 1)
 }
 
-const mostrarModal = async (idPeriodo, index) => {
+const mostrarModal =  async (idPeriodo, index) => {
   let inputInicio = document.querySelector('#inputfechaInicio');
   let inputFin    = document.querySelector('#inputfechaFin');
-  await limpiarModal()
+   await limpiarModal()
 
   if(!idPeriodo) {
     isNew.value = true;
@@ -200,20 +159,16 @@ const mostrarModal = async (idPeriodo, index) => {
     isNew.value = false;
     inputInicio.disabled = true;
     inputFin.disabled = true;
-
-    //const dato = await diasInhabiles.value[index];
-    const dato = idPeriodo;
-
+    const dato = await diasInhabiles.value[index];
+    //const dato = idPeriodo;
     state.idPeriodo = dato.idPeriodo;
     state.nombre = dato.nombrePeriodo;
-
     state.fechaInicio = UtilsDate.toDayMonthYear(dato.fechaInicio);
     state.fechaFinal = UtilsDate.toDayMonthYear(dato.fechaFin);
-
     state.activo = dato.activo;
 
   }
-  await modalPeriodo.value.show();
+   modalPeriodo.value.show();
 }
 
 const limpiarModal = async() => {
@@ -410,7 +365,7 @@ onMounted(() => {
              :config="humanfriendlyConfig"
              id="inputfechaInicio"
              class="form-control flatpickr-input"
-             :class="{'is-invalid': v$.fechaInicio.$error}, !isNew ? 'text-muted' : ''"
+             :class="{'is-invalid':v$.fechaInicio.$error}, !isNew ? 'text-muted' : '' "
              :style="!isNew ? 'cursor:not-allowed' : ''"
           ></flatPickr>
 
